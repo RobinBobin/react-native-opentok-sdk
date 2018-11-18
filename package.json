@@ -1,0 +1,24 @@
+{
+  "name": "react-native-opentok-sdk",
+  "version": "0.0.1",
+  "description": "A native module wrapping the TokBox OpenTok SDK for React Native",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/RobinBobin/react-native-opentok-sdk.git"
+  },
+  "keywords": [
+    "React Native",
+    "TokBox",
+    "OpenTok SDK"
+  ],
+  "author": "Ruben Shalimov <r_shalimov@inbox.ru>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/RobinBobin/react-native-opentok-sdk/issues"
+  },
+  "homepage": "https://github.com/RobinBobin/react-native-opentok-sdk#readme"
+}
