@@ -1,6 +1,9 @@
+import Session from "./js/Session";
+import Publisher from "./js/Publisher";
+import StreamView from "./js/StreamView";
 
-import { NativeModules } from 'react-native';
-
-const { OpenTokSdk } = NativeModules;
-
-export default OpenTokSdk;
+export default {
+   Session,
+   Publisher,
+   StreamView
+};
