@@ -169,13 +169,31 @@ public class OpenTokSdkModule extends BaseModule {
    @ReactMethod
    public void subscribeToSession(
       String sessionId,
-      String streamId,
+      ReadableMap params,
       Promise promise)
    {
+      Log.d(TAG, String.format("subscribeToSession(%s, %s)", sessionId, params.toHashMap()));
+      
       try {
          final SessionData sessionData = getSessionData(sessionId);
          
-         sessionData.subscribe(new Subscriber.Builder(getReactApplicationContext(), sessionData.getStream(streamId)).build());
+         
+         // = Create and init subscriber builder = //
+         final Subscriber.Builder builder = new Subscriber.Builder(getReactApplicationContext(), sessionData.getStream(params.getString("streamId")));
+         
+         
+         // = Build and init subscriber = //
+         final Subscriber subscriber = builder.build();
+         
+         if (params.hasKey("style")) {
+            final ReadableMap style = params.getMap("style");
+            
+            subscriber.setStyle(style.getString("key"), style.getString("value"));
+         }
+         
+         
+         // = Subscribe = //
+         sessionData.subscribe(subscriber);
          
          promise.resolve(null);
       } catch (IllegalArgumentException e) {
@@ -200,8 +218,6 @@ public class OpenTokSdkModule extends BaseModule {
    
    @ReactMethod
    public void cycleCamera(String sessionId, String publisherName) {
-      Log.d(TAG, String.format("cycleCamera(%s, %s)", sessionId, publisherName));
-      
       getSessionData(sessionId).getPublisher(publisherName).cycleCamera();
    }
    

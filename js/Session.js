@@ -41,7 +41,10 @@ export default class Session {
    }
    
    async subscribe(subscriber) {
-      await openTok.subscribeToSession(this.getId(), subscriber.getStreamId());
+      await openTok.subscribeToSession(this.getId(), {
+         streamId: subscriber.getStreamId(),
+         style: subscriber.getStyle()
+      });
    }
    
    async unsubscribe(subscriber) {

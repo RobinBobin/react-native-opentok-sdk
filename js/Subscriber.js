@@ -1,7 +1,16 @@
+import { NativeModules } from 'react-native';
+import { autobind } from "core-decorators";
+
+const openTok = NativeModules.OpenTokSdk;
+
+@autobind
 export default class Subscriber {
-   constructor(sessionId, streamId) {
+   static style = openTok.publisher.style;
+   
+   constructor(sessionId, streamId, style) {
       this._sessionId = sessionId;
       this._streamId = streamId;
+      this._style = style;
    }
    
    getSessionId() {
@@ -10,5 +19,9 @@ export default class Subscriber {
    
    getStreamId() {
       return this._streamId;
+   }
+   
+   getStyle() {
+      return this._style;
    }
 }

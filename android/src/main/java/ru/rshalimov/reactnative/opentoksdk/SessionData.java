@@ -92,7 +92,9 @@ public class SessionData {
    
    void unsubscribe() {
       for (final Subscriber subscriber : subscribers.values()) {
-         session.unsubscribe(subscriber);
+         if (subscriber.getStream() != null) {
+            session.unsubscribe(subscriber);
+         }
          
          subscriber.destroy();
       }
@@ -103,7 +105,9 @@ public class SessionData {
    void unsubscribe(String streamId) {
       final Subscriber subscriber = getSubscriber(streamId);
       
-      session.unsubscribe(subscriber);
+      if (subscriber.getStream() != null) {
+         session.unsubscribe(subscriber);
+      }
       
       subscriber.destroy();
       
