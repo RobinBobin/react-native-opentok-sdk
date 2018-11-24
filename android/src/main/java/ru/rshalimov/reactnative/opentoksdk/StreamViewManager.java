@@ -1,5 +1,6 @@
 package ru.rshalimov.reactnative.opentoksdk;
 
+import android.view.View;
 import android.widget.FrameLayout;
 
 import com.facebook.react.bridge.ReadableMap;
@@ -15,9 +16,11 @@ class StreamViewManager extends SimpleViewManager <FrameLayout> {
       return TAG;
    }
    
-   @ReactProp(name = "publisherId")
-   public void setPublisherId(FrameLayout view, ReadableMap publisherId) {
-      view.addView(OpentokSdkModule.getInstance().getSessionData(publisherId.getString("sessionId")).getPublisher(publisherId.getString("publisherName")).getView());
+   @ReactProp(name = "source")
+   public void setSource(FrameLayout streamView, ReadableMap source) {
+      final SessionData sessionData = OpenTokSdkModule.getInstance().getSessionData(source.getString("sessionId"));
+      
+      streamView.addView(source.hasKey("publisherName") ? sessionData.getPublisher(source.getString("publisherName")).getView() : sessionData.getSubscriber(source.getString("streamId")).getView());
    }
    
    @Override

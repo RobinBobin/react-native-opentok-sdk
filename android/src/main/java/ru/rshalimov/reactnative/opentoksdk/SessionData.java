@@ -1,24 +1,27 @@
 package ru.rshalimov.reactnative.opentoksdk;
 
+import java.lang.ref.WeakReference;
 import java.util.Map;
 import java.util.HashMap;
 
-import com.opentok.android.PublisherKit;
-import com.opentok.android.SubscriberKit;
+import com.opentok.android.Publisher;
 import com.opentok.android.Session;
+import com.opentok.android.Stream;
+import com.opentok.android.Subscriber;
 
 public class SessionData {
-   public final Session session;
+   final Session session;
    
-   private final Map <String, PublisherKit> publishers = new HashMap <> ();
-   private final Map <String, SubscriberKit> subscribers = new HashMap <> ();
+   private final Map <String, Publisher> publishers = new HashMap <> ();
+   private final Map <String, Subscriber> subscribers = new HashMap <> ();
+   private final Map <String, WeakReference <Stream>> streams = new HashMap <> ();
    
    SessionData(Session session) {
       this.session = session;
    }
    
-   PublisherKit getPublisher(String name) {
-      final PublisherKit publisher = publishers.get(name);
+   public Publisher getPublisher(String name) {
+      final Publisher publisher = publishers.get(name);
       
       if (publisher == null) {
          throw new IllegalArgumentException(String.format("No publisher with name \"%s\".", name));
@@ -27,8 +30,8 @@ public class SessionData {
       return publisher;
    }
    
-   SubscriberKit getSubscriber(String streamId) {
-      final SubscriberKit subscriber = subscribers.get(streamId);
+   public Subscriber getSubscriber(String streamId) {
+      final Subscriber subscriber = subscribers.get(streamId);
       
       if (subscriber == null) {
          throw new IllegalArgumentException(String.format("No subscriber for stream id \"%s\".", streamId));
@@ -37,14 +40,22 @@ public class SessionData {
       return subscriber;
    }
    
-   void publish(PublisherKit publisher) {
+   public void addStream(Stream stream) {
+      streams.put(stream.getStreamId(), new WeakReference <> (stream));
+   }
+   
+   public void removeStream(String streamId) {
+      streams.remove(streamId);
+   }
+   
+   void publish(Publisher publisher) {
       publishers.put(publisher.getName(), publisher);
       
       session.publish(publisher);
    }
    
    void unpublish() {
-      for (final PublisherKit publisher : publishers.values()) {
+      for (final Publisher publisher : publishers.values()) {
          session.unpublish(publisher);
          
          publisher.destroy();
@@ -54,7 +65,7 @@ public class SessionData {
    }
    
    void unpublish(String name) {
-      final PublisherKit publisher = getPublisher(name);
+      final Publisher publisher = getPublisher(name);
       
       session.unpublish(publisher);
       
@@ -63,14 +74,24 @@ public class SessionData {
       publishers.remove(name);
    }
    
-   void subscribe(SubscriberKit subscriber) {
+   Stream getStream(String streamId) {
+      final Stream stream = streams.get(streamId).get();
+      
+      if (stream == null) {
+         throw new IllegalArgumentException(String.format("No stream for stream id \"%s\".", streamId));
+      }
+      
+      return stream;
+   }
+   
+   void subscribe(Subscriber subscriber) {
       subscribers.put(subscriber.getStream().getStreamId(), subscriber);
       
       session.subscribe(subscriber);
    }
    
    void unsubscribe() {
-      for (final SubscriberKit subscriber : subscribers.values()) {
+      for (final Subscriber subscriber : subscribers.values()) {
          session.unsubscribe(subscriber);
          
          subscriber.destroy();
@@ -80,7 +101,7 @@ public class SessionData {
    }
    
    void unsubscribe(String streamId) {
-      final SubscriberKit subscriber = getSubscriber(streamId);
+      final Subscriber subscriber = getSubscriber(streamId);
       
       session.unsubscribe(subscriber);
       

@@ -8,7 +8,7 @@ import com.opentok.android.OpentokError;
 import com.opentok.android.Session;
 import com.opentok.android.Stream;
 
-import ru.rshalimov.reactnative.opentoksdk.OpentokSdkModule;
+import ru.rshalimov.reactnative.opentoksdk.OpenTokSdkModule;
 
 public class SessionListener implements Session.SessionListener {
    public static final String SESSION_CONNECTED = "SESSION_CONNECTED";
@@ -25,9 +25,9 @@ public class SessionListener implements Session.SessionListener {
       
       final WritableMap params = Arguments.createMap();
       
-      params.putString("id", session.getSessionId());
+      params.putString("sessionId", session.getSessionId());
       
-      OpentokSdkModule.getInstance().emit(SESSION_CONNECTED, params);
+      OpenTokSdkModule.getInstance().emit(SESSION_CONNECTED, params);
    }
    
    @Override
@@ -36,9 +36,9 @@ public class SessionListener implements Session.SessionListener {
       
       final WritableMap params = Arguments.createMap();
       
-      params.putString("id", session.getSessionId());
+      params.putString("sessionId", session.getSessionId());
       
-      OpentokSdkModule.getInstance().emit(SESSION_DISCONNECTED, params);
+      OpenTokSdkModule.getInstance().emit(SESSION_DISCONNECTED, params);
    }
    
    @Override
@@ -52,12 +52,12 @@ public class SessionListener implements Session.SessionListener {
       
       final WritableMap params = Arguments.createMap();
       
-      params.putString("id", sessionId);
+      params.putString("sessionId", sessionId);
       params.putString("errorCode", errorCode);
       params.putString("domain", domain);
       params.putString("message", message);
       
-      OpentokSdkModule.getInstance().emit(SESSION_ERROR, params);
+      OpenTokSdkModule.getInstance().emit(SESSION_ERROR, params);
    }
    
    @Override
@@ -68,11 +68,13 @@ public class SessionListener implements Session.SessionListener {
       Log.d(TAG, String.format("onStreamDropped(%s, %s)", sessionId, streamId));
       
       final WritableMap params = Arguments.createMap();
+      final OpenTokSdkModule instance = OpenTokSdkModule.getInstance();
       
-      params.putString("id", sessionId);
+      params.putString("sessionId", sessionId);
       params.putString("streamId", streamId);
       
-      OpentokSdkModule.getInstance().emit(SESSION_STREAM_DROPPED, params);
+      instance.getSessionData(sessionId).removeStream(streamId);
+      instance.emit(SESSION_STREAM_DROPPED, params);
    }
    
    @Override
@@ -83,10 +85,12 @@ public class SessionListener implements Session.SessionListener {
       Log.d(TAG, String.format("onStreamReceived(%s, %s)", sessionId, streamId));
       
       final WritableMap params = Arguments.createMap();
+      final OpenTokSdkModule instance = OpenTokSdkModule.getInstance();
       
-      params.putString("id", sessionId);
+      params.putString("sessionId", sessionId);
       params.putString("streamId", streamId);
       
-      OpentokSdkModule.getInstance().emit(SESSION_STREAM_RECEIVED, params);
+      instance.getSessionData(sessionId).addStream(stream);
+      instance.emit(SESSION_STREAM_RECEIVED, params);
    }
 }

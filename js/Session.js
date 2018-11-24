@@ -1,7 +1,7 @@
 import { NativeModules } from 'react-native';
 import { EventHandlingHelper } from "react-native-common-utils";
 
-const openTok = NativeModules.OpentokSdk;
+const openTok = NativeModules.OpenTokSdk;
 
 export default class Session {
    static async create(apiKey, sessionId, connectionEventsSuppressed = false) {
@@ -29,6 +29,25 @@ export default class Session {
       await openTok.disconnectSession(this.getId());
    }
    
+   async publish(publisher) {
+      await openTok.publishToSession(this.getId(), {
+         name: publisher.getName(),
+         style: publisher.getStyle()
+      });
+   }
+   
+   async unpublish(publisher) {
+      await openTok.unpublishFromSession(this.getId(), publisher.getName());
+   }
+   
+   async subscribe(subscriber) {
+      await openTok.subscribeToSession(this.getId(), subscriber.getStreamId());
+   }
+   
+   async unsubscribe(subscriber) {
+      await openTok.unsubscribeFromSession(this.getId(), subscriber.getStreamId());
+   }
+   
    getId() {
       return this._id;
    }
@@ -39,7 +58,7 @@ export default class Session {
    }
    
    _innerListener(data) {
-      if (data.id.valueOf() == this.getId()) {
+      if (data.sessionId.valueOf() == this.getId()) {
          this._eventHandlingHelper.invokeListeners(data);
       }
    }

@@ -6,9 +6,10 @@ import com.facebook.react.bridge.Promise;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.ReadableMap;
+import com.opentok.android.BaseVideoRenderer;
 import com.opentok.android.Publisher;
-import com.opentok.android.PublisherKit;
 import com.opentok.android.Session;
+import com.opentok.android.Subscriber;
 
 import java.util.Map;
 import java.util.HashMap;
@@ -19,19 +20,19 @@ import ru.rshalimov.reactnative.opentoksdk.SessionData;
 import ru.rshalimov.reactnative.opentoksdk.listeners.SessionListener;
 import ru.rshalimov.reactnative.opentoksdk.listeners.PublisherListener;
 
-public class OpentokSdkModule extends BaseModule {
-   private static final String TAG = "OpentokSdk";
+public class OpenTokSdkModule extends BaseModule {
+   private static final String TAG = "OpenTokSdk";
    
-   private static OpentokSdkModule instance;
+   private static OpenTokSdkModule instance;
    
    private final Map <String, SessionData> sessionData = new HashMap <> ();
    private final SessionListener sessionListener = new SessionListener();
    private final PublisherListener publisherListener = new PublisherListener();
    
-   OpentokSdkModule(ReactApplicationContext reactContext) {
+   OpenTokSdkModule(ReactApplicationContext reactContext) {
       super(reactContext);
       
-      OpentokSdkModule.instance = this;
+      OpenTokSdkModule.instance = this;
    }
    
    @Override
@@ -42,6 +43,13 @@ public class OpentokSdkModule extends BaseModule {
    @Override
    public Map <String, Object> getConstants() {
       return new MapBuilder()
+         .push("publisher")
+            .push("style")
+               .put("STYLE_VIDEO_SCALE", BaseVideoRenderer.STYLE_VIDEO_SCALE)
+               .put("STYLE_VIDEO_FILL", BaseVideoRenderer.STYLE_VIDEO_FILL)
+               .put("STYLE_VIDEO_FIT", BaseVideoRenderer.STYLE_VIDEO_FIT)
+            .pop()
+         .pop()
          .push("events")
             .push("session")
                .put(SessionListener.SESSION_CONNECTED)
@@ -113,17 +121,28 @@ public class OpentokSdkModule extends BaseModule {
       ReadableMap params,
       Promise promise)
    {
+      Log.d(TAG, String.format("publishToSession(%s, %s)", sessionId, params.toHashMap()));
+      
       try {
-         Log.d(TAG, String.format("publishToSession(%s, %s)", sessionId, params.toHashMap()));
-         
+         // = Create and init publisher builder = //
          final Publisher.Builder builder = new Publisher.Builder(getReactApplicationContext());
          
          builder.name(params.getString("name"));
          
+         
+         // = Build and init publisher = //
          final Publisher publisher = builder.build();
+         
+         if (params.hasKey("style")) {
+            final ReadableMap style = params.getMap("style");
+            
+            publisher.setStyle(style.getString("key"), style.getString("value"));
+         }
          
          publisher.setPublisherListener(publisherListener);
          
+         
+         // = Publish = //
          getSessionData(sessionId).publish(publisher);
          
          promise.resolve(null);
@@ -139,14 +158,51 @@ public class OpentokSdkModule extends BaseModule {
       Promise promise)
    {
       try {
-         Log.d(TAG, String.format("unpublishFromSession(%s, %s)", sessionId, publisherName));
-         
          getSessionData(sessionId).unpublish(publisherName);
          
          promise.resolve(null);
       } catch (IllegalArgumentException e) {
          promise.reject("", e);
       }
+   }
+   
+   @ReactMethod
+   public void subscribeToSession(
+      String sessionId,
+      String streamId,
+      Promise promise)
+   {
+      try {
+         final SessionData sessionData = getSessionData(sessionId);
+         
+         sessionData.subscribe(new Subscriber.Builder(getReactApplicationContext(), sessionData.getStream(streamId)).build());
+         
+         promise.resolve(null);
+      } catch (IllegalArgumentException e) {
+         promise.reject("", e);
+      }
+   }
+   
+   @ReactMethod
+   public void unsubscribeFromSession(
+      String sessionId,
+      String streamId,
+      Promise promise)
+   {
+      try {
+         getSessionData(sessionId).unsubscribe(streamId);
+         
+         promise.resolve(null);
+      } catch (IllegalArgumentException e) {
+         promise.reject("", e);
+      }
+   }
+   
+   @ReactMethod
+   public void cycleCamera(String sessionId, String publisherName) {
+      Log.d(TAG, String.format("cycleCamera(%s, %s)", sessionId, publisherName));
+      
+      getSessionData(sessionId).getPublisher(publisherName).cycleCamera();
    }
    
    public SessionData getSessionData(String sessionId) {
@@ -179,7 +235,7 @@ public class OpentokSdkModule extends BaseModule {
       }
    }
    
-   public static OpentokSdkModule getInstance() {
+   public static OpenTokSdkModule getInstance() {
       return instance;
    }
 }

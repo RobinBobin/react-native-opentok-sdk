@@ -1,28 +1,53 @@
 import { NativeModules } from 'react-native';
+import { autobind } from "core-decorators";
 
-const openTok = NativeModules.OpentokSdk;
+const openTok = NativeModules.OpenTokSdk;
 
+@autobind
 export default class Publisher {
-   constructor(sessionId, name) {
-      this._sessionId = sessionId;
-      this._name = name || "publisher";
+   static Builder = class {
+      static style = openTok.publisher.style;
+      
+      constructor(sessionId) {
+         this._sessionId = sessionId;
+         
+         this.setName();
+      }
+      
+      setName(name) {
+         this._name = name || "publisher";
+         
+         return this;
+      }
+      
+      setStyle(style) {
+         this._style = style;
+         
+         return this;
+      }
+      
+      build() {
+         return new Publisher(this);
+      }
    }
    
-   async publish() {
-      await openTok.publishToSession(this.getSessionId(), {
-         name: this.getName()
-      });
+   constructor(builder) {
+      this._builder = builder;
    }
    
-   async unpublish() {
-      await openTok.unpublishFromSession(this.getSessionId(), this.getName());
+   cycleCamera() {
+      openTok.cycleCamera(this.getSessionId(), this.getName());
    }
    
    getSessionId() {
-      return this._sessionId;
+      return this._builder._sessionId;
    }
    
    getName() {
-      return this._name;
+      return this._builder._name;
+   }
+   
+   getStyle() {
+      return this._builder._style;
    }
 }
