@@ -18,6 +18,7 @@ import ru.rshalimov.reactnative.common.BaseModule;
 import ru.rshalimov.reactnative.common.MapBuilder;
 import ru.rshalimov.reactnative.opentoksdk.SessionData;
 import ru.rshalimov.reactnative.opentoksdk.listeners.SessionListener;
+import ru.rshalimov.reactnative.opentoksdk.listeners.SignalListener;
 import ru.rshalimov.reactnative.opentoksdk.listeners.PublisherListener;
 
 public class OpenTokSdkModule extends BaseModule {
@@ -27,6 +28,7 @@ public class OpenTokSdkModule extends BaseModule {
    
    private final Map <String, SessionData> sessionData = new HashMap <> ();
    private final SessionListener sessionListener = new SessionListener();
+   private final SignalListener signalListener = new SignalListener();
    private final PublisherListener publisherListener = new PublisherListener();
    
    OpenTokSdkModule(ReactApplicationContext reactContext) {
@@ -58,6 +60,9 @@ public class OpenTokSdkModule extends BaseModule {
                .put(SessionListener.SESSION_STREAM_DROPPED)
                .put(SessionListener.SESSION_STREAM_RECEIVED)
             .pop()
+            .push("signal")
+               .put(SignalListener.SIGNAL_RECEIVED)
+            .pop()
             .push("publisher")
                .put(PublisherListener.PUBLISHER_ERROR)
                .put(PublisherListener.PUBLISHER_STREAM_CREATED)
@@ -81,6 +86,7 @@ public class OpenTokSdkModule extends BaseModule {
          .build();
       
       session.setSessionListener(sessionListener);
+      session.setSignalListener(signalListener);
       
       sessionData.put(session.getSessionId(), new SessionData(session));
       
@@ -219,6 +225,25 @@ public class OpenTokSdkModule extends BaseModule {
    @ReactMethod
    public void cycleCamera(String sessionId, String publisherName) {
       getSessionData(sessionId).getPublisher(publisherName).cycleCamera();
+   }
+   
+   @ReactMethod
+   public void sendSignal(
+      String sessionId,
+      String type,
+      String data,
+      Boolean retryAfterReconnect,
+      Promise promise)
+   {
+      Log.d(TAG, String.format("sendSignal(%s, %s, %s, %s).", sessionId, type, data, retryAfterReconnect));
+      
+      try {
+         getSessionData(sessionId).session.sendSignal(type, data, retryAfterReconnect);
+         
+         promise.resolve(null);
+      } catch (IllegalArgumentException e) {
+         promise.reject("", e);
+      }
    }
    
    public SessionData getSessionData(String sessionId) {

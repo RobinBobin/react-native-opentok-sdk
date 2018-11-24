@@ -12,7 +12,7 @@ export default class Session {
       session._eventHandlingHelper = new EventHandlingHelper({
          object: session,
          nativeModule: openTok,
-         eventGroups: [ "session" ],
+         eventGroups: [ "session", "signal" ],
          innerListener: session._innerListener
       });
       
@@ -49,6 +49,10 @@ export default class Session {
    
    async unsubscribe(subscriber) {
       await openTok.unsubscribeFromSession(this.getId(), subscriber.getStreamId());
+   }
+   
+   async sendSignal(type, data, retryAfterReconnect) {
+      await openTok.sendSignal(this.getId(), type, data, retryAfterReconnect);
    }
    
    getId() {
